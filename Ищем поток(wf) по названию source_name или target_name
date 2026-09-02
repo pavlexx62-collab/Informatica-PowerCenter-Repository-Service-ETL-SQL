@@ -1,0 +1,5 @@
+select * from rep_targ_mapping g where upper(target_name) like upper('%BIQ2169%'); 
+
+select * from rep_src_mapping g where upper(source_name) like upper('%BIQ2169%'); 
+
+select * from OPB_WFLOW_RUN t where WORKFLOW_NAME like '%2169%';
