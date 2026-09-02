@@ -1,4 +1,4 @@
-------1 выбираем воркфлоу 
+------1 выбираем воркфлоу  
 WITH WF as ( 
 select t1.SUBJECT_AREA, t1.WORKFLOW_ID, t1.WORKFLOW_NAME, t1.WORKFLOW_COMMENTS
 from rep_workflows t1
