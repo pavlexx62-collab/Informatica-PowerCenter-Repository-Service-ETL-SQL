@@ -1,0 +1,21 @@
+select OBJECT_NAME, USER_NAME, CONNECT_STRING, 
+CASE OBJECT_SUBTYPE
+    WHEN 106 THEN 'ODBC'
+    WHEN 104 THEN 'SQL Server'
+    WHEN 101 THEN 'ORACLE'
+    ELSE 'API'
+ END OBJECT_SUBTYPE,  
+   LTRIM(
+   (select b.ATTR_VALUE FROM OPB_CNX_ATTR B WHERE 
+    b.attr_value <> '0' and b.ATTR_ID in (1) and  CNX.OBJECT_ID = b.OBJECT_ID)||'  '||(select b.ATTR_VALUE FROM OPB_CNX_ATTR B WHERE
+     b.attr_value <> '0' and b.ATTR_ID in (4) and  CNX.OBJECT_ID = b.OBJECT_ID)||'  '||(select b.ATTR_VALUE FROM OPB_CNX_ATTR B WHERE
+      b.attr_value <> '0' and b.ATTR_ID in (10) and  CNX.OBJECT_ID = b.OBJECT_ID)||'  '||(select b.ATTR_VALUE FROM OPB_CNX_ATTR B WHERE
+       b.attr_value <> '0' and b.ATTR_ID in (11) and  CNX.OBJECT_ID = b.OBJECT_ID and b.session_id = 0)||'  '||(select b.ATTR_VALUE FROM OPB_CNX_ATTR B WHERE
+        b.attr_value <> '0' and b.ATTR_ID in (13) and  CNX.OBJECT_ID = b.OBJECT_ID)
+      ) ATTR_VALUE,
+   'INFA' REPO
+ from OPB_CNX CNX
+where 
+OBJECT_NAME is not null and 
+USER_NAME is not null 
+--CONNECT_STRING is not null
