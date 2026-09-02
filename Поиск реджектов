@@ -1,0 +1,35 @@
+---Запрос для поиска реджектов. 
+
+SELECT r.subject_area,
+       r.workflow_name,
+       r.instance_name AS session_name,
+       r.start_time AS session_start_time,
+       r.end_time AS session_end_time,
+       r.run_err_code,
+       l.instance_name,
+       l.partition_name,
+       l.applied_rows,
+       l.affected_rows,
+       l.rejected_rows
+  FROM rep_task_inst_run r
+ INNER JOIN rep_sess_log s
+    ON (s.subject_id = r.subject_id AND
+        s.workflow_id = r.workflow_id AND
+        s.session_id = r.task_id AND
+        s.workflow_run_id = r.workflow_run_id)      -- то, что работает прямо сейчас, будет порезано join'ом
+ INNER JOIN opb_swidginst_log l
+    ON (l.workflow_run_id = r.workflow_run_id
+        AND s.workflow_id = r.workflow_id
+        AND l.task_instance_id = r.instance_id
+        AND r.task_type = 68)                       -- берем только сессии
+ WHERE r.task_type = 68                             -- sesison
+   AND r.run_err_code = 0                           -- сессия завершилась безошибочно
+   AND (failed_rows > 0 OR failed_source_rows > 0)  -- были ошибки при считывании либо при записи
+   AND l.rejected_rows > 0                          -- таблица, при записи в которую были rejects
+   AND r.start_time > trunc(sysdate) - 15           -- ограничиваем выборку 15-ю днями (с запасом для новогодних праздников)
+/*
+   AND r.subject_area = 'SAP'                       -- debug conditions: 'ACRM' -- SAP
+   AND r.instance_name = 's_m_SAP__PortalSDO__load' -- debug conditions: 's_arch__DWH__FCT_DEAL_INDICATOR' -- 's_m_SAP__PortalSDO__load'
+   AND r.workflow_run_id = 3555208                  -- debug condition
+*/
+ ORDER BY r.subject_area, r.workflow_name, r.instance_name, r.start_time DESC
