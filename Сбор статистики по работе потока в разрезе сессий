@@ -1,0 +1,56 @@
+
+
+
+----Пишем название потока, и глубину по времени, результат капипастим во второй запрос ниже
+--------------------
+select WORKFLOW_RUN_ID, count(1) from (
+select --SUBJ_NAME, 
+--(select t2.SUBJ_NAME from OPB_SUBJECT t2 where t.SUBJECT_ID = t2.SUBJ_ID) SUBJ_NAME,
+t.WORKFLOW_NAME,
+t.START_TIME,
+t.END_TIME,
+t.WORKFLOW_RUN_ID,
+c.INSTANCE_NAME,
+c.RUN_ERR_MSG
+ from OPB_TASK_INST_RUN c join OPB_WFLOW_RUN t ON c.workflow_run_id = t.workflow_run_id
+ where  c.workflow_run_id 
+in (
+select t2.workflow_run_id from OPB_WFLOW_RUN t2 where t2.WORKFLOW_NAME in 
+(
+--список потоков
+'wf_BIQ_7006_CIF_delta'
+) 
+and t2.START_TIME > (sysdate -22) )) group by WORKFLOW_RUN_ID having count(1)>4
+
+
+
+
+
+---Запрос показывает выполнение потока в разрезе начитаных записей и переданых на приемникс тамингом выполнения каждой сесии
+
+-----------------------------
+select --SUBJ_NAME, 
+--(select t2.SUBJ_NAME from OPB_SUBJECT t2 where t.SUBJECT_ID = t2.SUBJ_ID) SUBJ_NAME,
+t.WORKFLOW_NAME,
+t.WORKFLOW_RUN_ID,
+c.INSTANCE_NAME,
+--t.START_TIME,
+--t.END_TIME,
+c.START_TIME,
+c.END_TIME,
+--((c.END_TIME - c.START_TIME)*24),
+(trunc((c.END_TIME - c.START_TIME)*24))||':'||
+--((c.END_TIME - c.START_TIME)*24)-(trunc((c.END_TIME - c.START_TIME)*24)),
+trunc ( ( ((c.END_TIME - c.START_TIME)*24)-(trunc((c.END_TIME - c.START_TIME)*24))  )   *60) LONG_TIME,
+(select SRC_SUCCESS_ROWS from OPB_SESS_TASK_LOG g where g.workflow_run_id = c.workflow_run_id and g.INSTANCE_ID = c.INSTANCE_ID)SRC_SUCCESS_ROWS ,
+(select SRC_FAILED_ROWS from OPB_SESS_TASK_LOG g where g.workflow_run_id = c.workflow_run_id and g.INSTANCE_ID = c.INSTANCE_ID)SRC_FAILED_ROWS ,
+(select TARG_SUCCESS_ROWS from OPB_SESS_TASK_LOG g where g.workflow_run_id = c.workflow_run_id and g.INSTANCE_ID = c.INSTANCE_ID)TARG_SUCCESS_ROWS  ,
+(select TARG_FAILED_ROWS from OPB_SESS_TASK_LOG g where g.workflow_run_id = c.workflow_run_id and g.INSTANCE_ID = c.INSTANCE_ID)TARG_FAILED_ROWS   ,
+c.RUN_ERR_MSG
+
+ from OPB_TASK_INST_RUN c join OPB_WFLOW_RUN t ON c.workflow_run_id = t.workflow_run_id
+ where  c.workflow_run_id in (
+ '3043206',
+'3109207',
+'3127356') order by c.START_TIME, t.workflow_run_id desc
+
